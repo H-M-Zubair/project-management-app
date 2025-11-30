@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin, supabase } from '@/lib/supabase';
 
+
+const supabaseAdmin = getSupabaseAdmin();
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -10,7 +12,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('tags')
     .select('*')
     .eq('user_id', session.user.id)
@@ -37,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('tags')
     .insert({
       name,

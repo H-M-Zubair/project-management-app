@@ -17,6 +17,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await getUserByEmail(credentials.email);
 
+        console.log('Authorized user:', user);
         if (!user) {
           throw new Error('No user found with this email');
         }

@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import { supabase } from '@/lib/supabase';
 
+import { getSupabaseAdmin } from '@/lib/supabase';
+const supabaseAdmin = getSupabaseAdmin();
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -13,7 +15,7 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: task, error } = await supabase
+  const { data: task, error } = await supabaseAdmin
     .from('tasks')
     .select(`
       *,
@@ -32,7 +34,7 @@ export async function GET(
     return NextResponse.json({ error: 'Task not found' }, { status: 404 });
   }
 
-  const { data: taskTags } = await supabase
+  const { data: taskTags } = await supabaseAdmin
     .from('task_tags')
     .select('tag:tags(*)')
     .eq('task_id', task.id);
@@ -58,7 +60,7 @@ export async function PUT(
   const body = await req.json();
   const { title, description, priority, status_id, tag_ids } = body;
 
-  const { data: existingTask } = await supabase
+  const { data: existingTask } = await supabaseAdmin
     .from('tasks')
     .select('project:projects(user_id)')
     .eq('id', params.id)
@@ -74,7 +76,7 @@ export async function PUT(
   if (priority !== undefined) updateData.priority = priority;
   if (status_id !== undefined) updateData.status_id = status_id;
 
-  const { data: task, error } = await supabase
+  const { data: task, error } = await supabaseAdmin
     .from('tasks')
     .update(updateData)
     .eq('id', params.id)
@@ -111,17 +113,19 @@ export async function DELETE(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: existingTask } = await supabase
+  console.log("Deleting task with id:", params.id);
+
+  const { data: existingTask } = await supabaseAdmin
     .from('tasks')
     .select('project:projects(user_id)')
     .eq('id', params.id)
-    .maybeSingle();
+    .single();
 
   if (!existingTask || (existingTask.project as any)?.user_id !== session.user.id) {
     return NextResponse.json({ error: 'Task not found' }, { status: 404 });
   }
 
-  const { error } = await supabase.from('tasks').delete().eq('id', params.id);
+  const { error } = await supabaseAdmin.from('tasks').delete().eq('id', params.id);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

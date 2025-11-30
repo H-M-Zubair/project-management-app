@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
-import { supabase } from '@/lib/supabase';
+import { supabase ,getSupabaseAdmin} from '@/lib/supabase';
 
+const supabaseAdmin = getSupabaseAdmin();
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
 
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });
   }
 
-  const projectCheck = await supabase
+  const projectCheck = await supabaseAdmin
     .from('projects')
     .select('id')
     .eq('id', projectId)
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('tasks')
     .select(`
       *,
@@ -46,7 +47,7 @@ export async function GET(req: NextRequest) {
   let taskTagsData: any[] = [];
 
   if (taskIds.length > 0) {
-    const { data: taskTagsResult } = await supabase
+    const { data: taskTagsResult } = await supabaseAdmin
       .from('task_tags')
       .select('task_id, tag:tags(*)')
       .in('task_id', taskIds);
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const projectCheck = await supabase
+  const projectCheck = await supabaseAdmin
     .from('projects')
     .select('id')
     .eq('id', project_id)
@@ -92,7 +93,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
 
-  const { data: task, error } = await supabase
+  const { data: task, error } = await supabaseAdmin
     .from('tasks')
     .insert({
       title,

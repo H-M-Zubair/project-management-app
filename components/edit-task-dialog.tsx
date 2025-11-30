@@ -104,6 +104,8 @@ export function EditTaskDialog({
 
       if (response.ok) {
         onSuccess();
+
+        console.log("Deleted task successfully, closing dialog.");
         onOpenChange(false);
       }
     } catch (error) {

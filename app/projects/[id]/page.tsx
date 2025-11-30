@@ -6,8 +6,10 @@ import { useRouter, useParams } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { KanbanBoard } from '@/components/kanban-board';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { Project, Status, Tag, TaskWithRelations } from '@/lib/supabase';
+import { } from '@radix-ui/react-alert-dialog';
+import { AlertDialogFooter, AlertDialogHeader ,AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function ProjectPage() {
   const { data: session, status: authStatus } = useSession();
@@ -33,6 +35,7 @@ export default function ProjectPage() {
     }
   }, [authStatus, projectId]);
 
+  const [isDeleting, setIsDeleting] = useState(false);
   const fetchProjectData = async () => {
     try {
       const [projectRes, tasksRes, statusesRes, tagsRes] = await Promise.all([
@@ -67,6 +70,24 @@ export default function ProjectPage() {
       setIsLoading(false);
     }
   };
+
+  const handleDeleteProject = async () => {
+  setIsDeleting(true);
+  try {
+    const response = await fetch(`/api/projects/${projectId}`, {
+      method: 'DELETE',
+    });
+    if (response.ok) {
+      router.push('/dashboard');
+    } else {
+      console.error('Failed to delete project');
+    }
+  } catch (error) {
+    console.error('Error deleting project:', error);
+  } finally {
+    setIsDeleting(false);
+  }
+};
 
   const refreshTasks = () => {
     fetchProjectData();
@@ -119,6 +140,7 @@ export default function ProjectPage() {
             <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
               {project.name}
             </h2>
+           
             {project.description && (
               <p className="text-slate-600 dark:text-slate-400 mt-2">
                 {project.description}
@@ -134,6 +156,35 @@ export default function ProjectPage() {
           tags={tags}
           onTasksChange={refreshTasks}
         />
+
+         <h3 className='my-4'>
+              <AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button variant="destructive" size="sm" className="gap-2">
+      <Trash2 className="w-4 h-4" />
+      Delete Project
+    </Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Delete Project</AlertDialogTitle>
+      <AlertDialogDescription>
+        Are you sure? This will delete the project and all associated tasks. This action cannot be undone.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction
+        onClick={handleDeleteProject}
+        disabled={isDeleting}
+        className="bg-red-600 hover:bg-red-700"
+      >
+        {isDeleting ? 'Deleting...' : 'Delete'}
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+            </h3>
       </main>
     </div>
   );

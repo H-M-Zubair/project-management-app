@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase,getSupabaseAdmin } from '@/lib/supabase';
 import { hashPassword } from '@/lib/auth';
 
+const supabaseAdmin = getSupabaseAdmin();
 export async function POST(req: NextRequest) {
   try {
+
+    if(!supabaseAdmin || supabaseAdmin === null) {
+      throw new Error('Supabase Admin client is not initialized');
+    }
+
     const password = await hashPassword('password123');
 
     const users = [
@@ -19,14 +25,14 @@ export async function POST(req: NextRequest) {
       { email: 'henry@example.com', name: 'Henry Wilson', password },
     ];
 
-    const { data: insertedUsers, error: userError } = await supabase
+    const { data: insertedUsers, error: userError } = await supabaseAdmin
       .from('users')
       .upsert(users, { onConflict: 'email' })
       .select();
 
     if (userError) throw userError;
 
-    const { data: statuses, error: statusError } = await supabase
+    const { data: statuses, error: statusError } = await supabaseAdmin
       .from('statuses')
       .select('*');
 
@@ -74,14 +80,14 @@ export async function POST(req: NextRequest) {
       tags.push(...userTags);
     }
 
-    const { data: insertedProjects, error: projectError } = await supabase
+    const { data: insertedProjects, error: projectError } = await supabaseAdmin
       .from('projects')
       .insert(projects)
       .select();
 
     if (projectError) throw projectError;
 
-    const { data: insertedTags, error: tagError } = await supabase
+    const { data: insertedTags, error: tagError } = await supabaseAdmin
       .from('tags')
       .insert(tags)
       .select();
@@ -152,7 +158,7 @@ export async function POST(req: NextRequest) {
       tasks.push(...projectTasks);
     }
 
-    const { data: insertedTasks, error: taskError } = await supabase
+    const { data: insertedTasks, error: taskError } = await supabaseAdmin
       .from('tasks')
       .insert(tasks)
       .select();
@@ -177,7 +183,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const { error: taskTagError } = await supabase
+    const { error: taskTagError } = await supabaseAdmin
       .from('task_tags')
       .insert(taskTags);
 
